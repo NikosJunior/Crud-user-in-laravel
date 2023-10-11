@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Artisan;
 class UserController extends Controller
 {
     /**
@@ -29,11 +31,15 @@ class UserController extends Controller
     public function store(Request $request)
     {
         // La validation des données
-        $this->validate($request, [
+        $validator = Validator::make($request->all(), [
             "name" => "required|unique:users|regex:/^[\w\s-]+$/|max:100",
             "email" => "required|email|unique:users|regex:/^.+@.+\..+$/i",
             "password" => "required|min:8"
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Validation failed', 'messages' => $validator->errors ()], 400);
+        }
         try {
             $user = User::create([
                 "name" => $request->name,
@@ -70,9 +76,40 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        try {
+             $user = User::find($id);
+        } catch (\Exception $e) {
+            return response()->json(["Error" => "user not catch"]);
+        }
+
+        // La validation des données
+        $validator = Validator::make($request->all(), [
+            "name" => "required|unique:users|regex:/^[\w\s-]+$/|max:100",
+            "email" => "required|email|unique:users|regex:/^.+@.+\..+$/i",
+            "password" => "required|min:8"
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Validation failed', 'messages' => $validator->errors ()], 400);
+        };
+// echo($request);
+// echo($user);
+         // Vérification du mot de passe
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['error' => 'Mot de passe incorrect'], 401);
+        };
+        try {
+            $user->update([
+                "name"=> $request->name,
+                "email" =>$request->email
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(["Error" => "Update not successfully"], 500);
+        }
+        return response()->json($user,201);
     }
 
     /**
