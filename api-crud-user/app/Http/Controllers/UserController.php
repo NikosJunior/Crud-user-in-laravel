@@ -14,7 +14,16 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
+        try {
+            $users=User::all();
+        } catch (\Exception $e) {
+            return response()->json(["error" => "Users not get"]);
+        }
+        $users = User::all();
+        if(count($users) <= 0){
+            return response(["message" => "Aucun utilisateur disponible pour le moment"]);
+        }
+        return response()->json($users, 201);
     }
 
     /**
