@@ -49,9 +49,14 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        try {
+            $user = User::find($id);
+        } catch (\Throwable $th) {
+            return response()->json(["Error" => "user not catch"]);
+        }
+        return response()->json($user, 201);
     }
 
     /**
